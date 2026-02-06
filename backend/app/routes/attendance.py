@@ -2,6 +2,11 @@ from fastapi import APIRouter, HTTPException
 from ..database import attendance_collection, employee_collection
 from ..schemas import AttendanceCreate
 from datetime import date
+from bson import ObjectId
+from pydantic import BaseModel
+
+class AttendanceUpdate(BaseModel):
+    status: str
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
 stats_router = APIRouter(prefix="/stats", tags=["Statistics"])
@@ -39,6 +44,26 @@ def mark_attendance(attendance: AttendanceCreate):
     attendance_collection.insert_one(attendance_dict)
     return {"message": "Attendance marked successfully"}
 
+@router.put("/{record_id}")
+def update_attendance(record_id: str, update: AttendanceUpdate):
+    """Update existing attendance record"""
+    try:
+        # Convert string ID to ObjectId
+        obj_id = ObjectId(record_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid record ID")
+    
+    # Find and update the record
+    result = attendance_collection.update_one(
+        {"_id": obj_id},
+        {"$set": {"status": update.status}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    return {"message": "Attendance updated successfully"}
+
 @stats_router.get("/attendance/today")
 def get_today_attendance_stats():
     """Get attendance stats for today"""
@@ -69,6 +94,10 @@ def get_today_attendance_stats():
 @router.get("/{employee_id}")
 def get_attendance(employee_id: str):
     records = list(attendance_collection.find(
-        {"employee_id": employee_id}, {"_id": 0}
+        {"employee_id": employee_id}
     ))
+    # Convert ObjectId to string for JSON serialization
+    for record in records:
+        record["id"] = str(record["_id"])
+        del record["_id"]
     return records

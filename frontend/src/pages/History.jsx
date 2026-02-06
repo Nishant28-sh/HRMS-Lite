@@ -94,8 +94,9 @@ export default function History({ filter, clearFilter }) {
   }, []);
 
   useEffect(() => {
-    if (filter && filter.type && filter.type.startsWith('today-')) {
-      fetchTodayAttendance();
+    if (filter && filter.employeeId) {
+      setSelectedEmployee(filter.employeeId);
+      fetchAttendance(filter.employeeId);
     }
   }, [filter]);
 
@@ -106,6 +107,12 @@ export default function History({ filter, clearFilter }) {
       setRecords([]);
     }
   }, [selectedEmployee]);
+
+  useEffect(() => {
+    if (filter && filter.type && filter.type.startsWith('today-')) {
+      fetchTodayAttendance();
+    }
+  }, [filter]);
 
   // Filter records by date range
   const getFilteredAttendance = () => {
@@ -158,15 +165,15 @@ export default function History({ filter, clearFilter }) {
   };
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1 bg-gradient-to-br from-gray-50 via-blue-50/20 to-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">{getFilterTitle()}</h1>
-          <p className="text-gray-500 mt-1">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50/50 backdrop-blur-md border-b border-blue-100/50 px-4 md:px-8 py-8 sticky top-0 z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex-1 pt-8 lg:pt-0">
+          <h1 className="text-2xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent drop-shadow-sm">{getFilterTitle()}</h1>
+          <p className="text-gray-600 mt-2.5 font-medium text-sm md:text-base">
             {showTodayView 
-              ? `Viewing attendance records for ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
-              : "View detailed attendance records for each employee"
+              ? `📅 Viewing attendance for ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`
+              : "📊 View detailed attendance records for each employee"
             }
           </p>
         </div>
@@ -176,21 +183,25 @@ export default function History({ filter, clearFilter }) {
               clearFilter();
               setSelectedEmployee("");
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="ml-0 md:ml-6 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3.5 rounded-xl transition-all font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transform hover:-translate-y-1 active:translate-y-0 whitespace-nowrap"
           >
-            View All History
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
+            </svg>
+            <span>View All</span>
           </button>
         ) : employees.length > 0 && (
-          <div className="w-64">
+          <div className="ml-0 md:ml-6 w-full md:w-96">
+            <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">👤 Select Employee</label>
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-5 py-3.5 border-2.5 border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white font-semibold text-gray-800 hover:border-blue-400 shadow-md text-sm md:text-base"
             >
-              <option value="">Select an employee</option>
+              <option value="">Choose an employee...</option>
               {employees.map((emp) => (
                 <option key={emp.employee_id} value={emp.employee_id}>
-                  {emp.full_name} ({emp.employee_id})
+                  {emp.full_name} - {emp.department} ({emp.employee_id})
                 </option>
               ))}
             </select>
@@ -199,246 +210,188 @@ export default function History({ filter, clearFilter }) {
       </div>
 
       {/* Content */}
-      <div className="p-8">
+      <div className="p-4 md:p-8 animate-fade-in">
         {/* Date Range Filter - Only show for individual employee view */}
         {!showTodayView && selectedEmployee && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border border-gray-200/50">
+            <div className="flex items-end gap-6 flex-wrap">
+              <div className="flex-1 min-w-[250px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2.5">Start Date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-300 bg-white"
                 />
               </div>
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <div className="flex-1 min-w-[250px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2.5">End Date</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-300 bg-white"
                 />
               </div>
               {(startDate || endDate) && (
-                <div className="flex items-end">
-                  <button
-                    onClick={clearDateFilter}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
-                  >
-                    Clear Filter
-                  </button>
-                </div>
+                <button
+                  onClick={clearDateFilter}
+                  className="px-6 py-3.5 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all font-semibold shadow-lg transform hover:-translate-y-0.5"
+                >
+                  Clear Filter
+                </button>
               )}
             </div>
           </div>
         )}
         
         {showTodayView ? (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              </div>
-            ) : filteredRecords.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-20 w-20 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
-                </svg>
-                <p className="text-gray-500 mt-4 text-lg">No records found</p>
-                <p className="text-gray-400 mt-2">No attendance has been marked for today yet.</p>
-              </div>
-            ) : (
-              <>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-purple-600 to-pink-600">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Employee ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Department</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredRecords.map((record, idx) => (
-                      <tr key={idx} className="hover:bg-purple-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm font-semibold text-gray-900">{record.employee.employee_id}</p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                              {record.employee.full_name?.charAt(0) || 'N/A'}
-                            </div>
-                            <div 
-                              className="ml-4 cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => handleEmployeeClick(record.employee.employee_id)}
-                              title="Click to view attendance history"
-                            >
-                              <p className="text-sm font-semibold text-blue-600 hover:text-blue-800">{record.employee.full_name}</p>
-                              <p className="text-xs text-gray-500">{record.employee.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm text-gray-700">{record.employee.department}</p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {record.attendance?.status === "Present" ? (
-                            <span className="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                              </svg>
-                              Present
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-                              </svg>
-                              Absent
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    Total records: <span className="font-semibold">{filteredRecords.length}</span>
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        ) : employees.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <svg className="mx-auto h-24 w-24 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
-            </svg>
-            <p className="text-gray-800 font-semibold mt-4 text-xl">No employees found</p>
-            <p className="text-gray-500 mt-2">Add employees first to view attendance history.</p>
-          </div>
-        ) : !selectedEmployee ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <svg className="mx-auto h-24 w-24 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
-            </svg>
-            <p className="text-gray-800 font-semibold mt-4 text-xl">Select an employee</p>
-            <p className="text-gray-500 mt-2">Choose an employee to view their attendance history.</p>
-          </div>
-        ) : (
           <>
-            {/* Employee Statistics Cards */}
-            {selectedEmployee && employeeStats.totalDays > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm font-medium">Total Days</p>
-                      <p className="text-3xl font-bold mt-2">{employeeStats.totalDays}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+            {/* Today's Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Total Marked */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-blue-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-md shadow-blue-500/30 group-hover:shadow-lg group-hover:shadow-blue-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
                       </svg>
                     </div>
                   </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Total Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{filteredRecords.length}</p>
                 </div>
-                
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-100 text-sm font-medium">Present Days</p>
-                      <p className="text-3xl font-bold mt-2">{employeeStats.presentDays}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              </div>
+
+              {/* Present Days */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-green-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-md shadow-green-500/30 group-hover:shadow-lg group-hover:shadow-green-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                       </svg>
                     </div>
                   </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Present Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{filteredRecords.filter(r => r.attendance?.status === 'Present').length}</p>
                 </div>
-                
-                <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-red-100 text-sm font-medium">Absent Days</p>
-                      <p className="text-3xl font-bold mt-2">{employeeStats.absentDays}</p>
-                    </div>
-                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              </div>
+
+              {/* Absent Days */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-red-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-red-400 to-orange-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-red-500 to-red-600 p-3 rounded-xl shadow-md shadow-red-500/30 group-hover:shadow-lg group-hover:shadow-red-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
                       </svg>
                     </div>
                   </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Absent Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{filteredRecords.filter(r => r.attendance?.status === 'Absent').length}</p>
                 </div>
-                
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-purple-100 text-sm font-medium">Attendance Rate</p>
-                      <p className="text-3xl font-bold mt-2">{employeeStats.attendanceRate}%</p>
-                    </div>
-                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+              </div>
+
+              {/* Attendance Rate */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-purple-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl shadow-md shadow-purple-500/30 group-hover:shadow-lg group-hover:shadow-purple-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                       </svg>
                     </div>
                   </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Attendance Rate</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+                    {filteredRecords.length > 0 ? ((filteredRecords.filter(r => r.attendance?.status === 'Present').length / filteredRecords.length) * 100).toFixed(1) : '0.0'}%
+                  </p>
                 </div>
               </div>
-            )}
-            
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-              </div>
-            ) : filteredAttendance.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-20 w-20 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
-                </svg>
-                <p className="text-gray-500 mt-4">No attendance records found{(startDate || endDate) ? ' for the selected date range' : ' for this employee'}.</p>
-              </div>
-            ) : (
-              <>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-purple-600 to-pink-600">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Day</th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAttendance.map((record, idx) => {
-                      const dateObj = new Date(record.date);
-                      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                      
-                      return (
-                        <tr key={idx} className="hover:bg-purple-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <p className="text-sm font-semibold text-gray-900">{record.date}</p>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-200/50">
+              {loading ? (
+                <div className="flex justify-center items-center py-16">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent absolute inset-0"></div>
+                  </div>
+                </div>
+              ) : filteredRecords.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="bg-gradient-to-br from-blue-100 to-indigo-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="h-12 w-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 font-semibold text-lg">No records found</p>
+                  <p className="text-gray-400 text-sm mt-2">No attendance has been marked for today yet.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 text-white">
+                        <th className="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Employee</th>
+                        <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider">Employee ID</th>
+                        <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider">Department</th>
+                        <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200/50">
+                      {filteredRecords.map((record, idx) => (
+                        <tr key={idx} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200">
+                          <td className="px-8 py-5 whitespace-nowrap">
+                            <div className="flex items-center space-x-4">
+                              <div className={`relative w-12 h-12 bg-gradient-to-br ${
+                                idx % 5 === 0 ? 'from-blue-500 to-indigo-600' :
+                                idx % 5 === 1 ? 'from-purple-500 to-pink-600' :
+                                idx % 5 === 2 ? 'from-green-500 to-teal-600' :
+                                idx % 5 === 3 ? 'from-orange-500 to-red-600' :
+                                'from-cyan-500 to-blue-600'
+                              } rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform`}>
+                                {record.employee.full_name?.charAt(0) || 'N'}
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                              </div>
+                              <div
+                                className="cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => handleEmployeeClick(record.employee.employee_id)}
+                                title="Click to view attendance history"
+                              >
+                                <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{record.employee.full_name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">{record.employee.email}</p>
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <p className="text-sm text-gray-700">{dayName}</p>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <div className="inline-flex items-center bg-blue-50 px-3 py-1.5 rounded-lg">
+                              <span className="text-sm font-semibold text-blue-700">{record.employee.employee_id}</span>
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {record.status === "Present" ? (
-                              <span className="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            <span className="px-4 py-1.5 inline-flex text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-sm">
+                              {record.employee.department}
+                            </span>
+                          </td>
+                          <td className="px-6 py-5 whitespace-nowrap">
+                            {record.attendance?.status === "Present" ? (
+                              <span className="px-4 py-1.5 inline-flex items-center text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-sm">
+                                <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                                 </svg>
                                 Present
                               </span>
                             ) : (
-                              <span className="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <span className="px-4 py-1.5 inline-flex items-center text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-red-100 to-orange-100 text-red-700 shadow-sm">
+                                <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
                                 </svg>
                                 Absent
@@ -446,26 +399,151 @@ export default function History({ filter, clearFilter }) {
                             )}
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    {(startDate || endDate) ? (
-                      <>
-                        Showing <span className="font-semibold">{filteredAttendance.length}</span> of <span className="font-semibold">{records.length}</span> records
-                      </>
-                    ) : (
-                      <>
-                        Total records: <span className="font-semibold">{records.length}</span>
-                      </>
-                    )}
-                  </p>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Employee History Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Total Days */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-blue-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl shadow-md shadow-blue-500/30 group-hover:shadow-lg group-hover:shadow-blue-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Total Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{employeeStats.totalDays}</p>
+                </div>
+              </div>
+
+              {/* Present Days */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-green-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-3 rounded-xl shadow-md shadow-green-500/30 group-hover:shadow-lg group-hover:shadow-green-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Present Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">{employeeStats.presentDays}</p>
+                </div>
+              </div>
+
+              {/* Absent Days */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-red-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-red-400 to-orange-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-red-500 to-red-600 p-3 rounded-xl shadow-md shadow-red-500/30 group-hover:shadow-lg group-hover:shadow-red-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Absent Days</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">{employeeStats.absentDays}</p>
+                </div>
+              </div>
+
+              {/* Attendance Rate */}
+              <div className="group relative bg-white/90 rounded-2xl shadow-md hover:shadow-xl p-6 overflow-hidden border border-purple-100 transition-all duration-300 hover:-translate-y-1 hover:bg-white">
+                <div className="absolute -right-10 -top-10 w-36 h-36 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-500" />
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-xl shadow-md shadow-purple-500/30 group-hover:shadow-lg group-hover:shadow-purple-500/40 transition-all">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Attendance Rate</p>
+                  <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{employeeStats.attendanceRate}%</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Attendance Table */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-200/50">
+              {loading ? (
+                <div className="flex justify-center items-center py-16">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent absolute inset-0"></div>
+                  </div>
+                </div>
+              ) : filteredAttendance.length === 0 ? (
+                <div className="text-center py-24">
+                  <div className="bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 w-28 h-28 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <svg className="h-14 w-14 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                  <p className="text-gray-900 font-bold text-2xl">No records found</p>
+                  <p className="text-gray-600 text-lg mt-3">No attendance records {(startDate || endDate) ? 'for the selected date range' : 'for this employee'}.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 text-white">
+                        <th className="px-8 py-5 text-left text-xs font-bold uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider">Day</th>
+                        <th className="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200/50">
+                      {filteredAttendance.map((record, idx) => {
+                        const dateObj = new Date(record.date);
+                        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                        
+                        return (
+                          <tr key={idx} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200">
+                            <td className="px-8 py-5 whitespace-nowrap">
+                              <p className="text-sm font-bold text-gray-900">{record.date}</p>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                {dayName}
+                              </span>
+                            </td>
+                            <td className="px-6 py-5 whitespace-nowrap">
+                              {record.status === "Present" ? (
+                                <span className="px-4 py-1.5 inline-flex items-center text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 shadow-sm">
+                                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                                  </svg>
+                                  Present
+                                </span>
+                              ) : (
+                                <span className="px-4 py-1.5 inline-flex items-center text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-red-100 to-orange-100 text-red-700 shadow-sm">
+                                  <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                                  </svg>
+                                  Absent
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

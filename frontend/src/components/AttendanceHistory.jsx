@@ -37,7 +37,7 @@ export default function AttendanceHistory() {
         <h2 className="text-xl font-bold text-gray-800">Attendance History</h2>
       </div>
 
-      <form onSubmit={fetchRecords} className="flex gap-3 mb-6">
+      <form onSubmit={fetchRecords} className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="flex-1 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -54,7 +54,7 @@ export default function AttendanceHistory() {
         </div>
         <button
           type="submit"
-          className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2 font-medium"
+          className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center space-x-2 font-medium whitespace-nowrap"
           disabled={loading}
         >
           {loading ? (
