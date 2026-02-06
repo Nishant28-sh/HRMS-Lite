@@ -18,25 +18,3 @@ class AttendanceCreate(BaseModel):
             date: lambda v: v.isoformat() if isinstance(v, date) else v
         }
 
-class SalaryCreate(BaseModel):
-    employee_id: str
-    month: str  # YYYY-MM format
-    base_salary: float
-    bonus: float = 0
-    deductions: float = 0
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "employee_id": "E001",
-                "month": "2024-02",
-                "base_salary": 50000,
-                "bonus": 5000,
-                "deductions": 2000
-            }
-        }
-
-class SalaryUpdate(BaseModel):
-    base_salary: float = None
-    bonus: float = None
-    deductions: float = None

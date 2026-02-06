@@ -19,7 +19,6 @@ db = client["hrms_lite"]
 
 employee_collection = db["employees"]
 attendance_collection = db["attendance"]
-salary_collection = db["salary"]
 
 # Initialize database indexes
 def init_db():
@@ -27,5 +26,3 @@ def init_db():
     employee_collection.create_index("employee_id", unique=True)
     employee_collection.create_index("email", unique=True)
     attendance_collection.create_index([("employee_id", 1), ("date", -1)])
-    salary_collection.create_index([("employee_id", 1), ("month", -1)])
-    salary_collection.create_index("month")

@@ -3,7 +3,6 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
-import Payroll from "./pages/Payroll";
 import History from "./pages/History";
 
 function App() {
@@ -19,8 +18,6 @@ function App() {
         return <Employees setCurrentPage={setCurrentPage} setHistoryFilter={setHistoryFilter} />;
       case "attendance":
         return <Attendance />;
-      case "payroll":
-        return <Payroll />;
       case "history":
         return <History filter={historyFilter} clearFilter={() => setHistoryFilter(null)} />;
       default:

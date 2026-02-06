@@ -1,6 +1,6 @@
 # HRMS Lite
 
-A modern, lightweight HRMS for managing employees, attendance, and payroll with a clean dashboard and fast workflows.
+A modern, lightweight HRMS for managing employees and attendance with a clean dashboard and fast workflows.
 
 ## Live Links
 - Frontend: https://hrms-lite-ivory.vercel.app/
@@ -9,7 +9,6 @@ A modern, lightweight HRMS for managing employees, attendance, and payroll with 
 ## Highlights
 - Employee management (add, view, delete)
 - Attendance marking and history
-- Payroll management with monthly summaries
 - Responsive UI with sidebar collapse
 - Dark mode support
 
@@ -25,7 +24,6 @@ HRMS LITE/
 │   │   ├── routes/
 │   │   │   ├── attendance.py
 │   │   │   ├── employee.py
-│   │   │   └── salary.py
 │   │   ├── main.py
 │   │   ├── database.py
 │   │   ├── models.py
@@ -97,14 +95,6 @@ Frontend: http://localhost:5173
 - `DELETE /attendance/{id}`
 - `GET /attendance/stats/{employee_id}`
 
-### Payroll
-- `POST /salary`
-- `GET /salary/month/{month}`
-- `GET /salary/employee/{employee_id}`
-- `GET /salary/payroll/summary/{month}`
-- `PUT /salary/{salary_id}`
-- `DELETE /salary/{salary_id}`
-- `GET /salary/stats/total/{month}`
 
 ## Deployment Notes
 - Render backend start command:
