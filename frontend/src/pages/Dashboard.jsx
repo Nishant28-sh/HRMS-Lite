@@ -11,6 +11,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
     presentToday: 0,
     absentToday: 0,
   });
+  const [weeklyTrend, setWeeklyTrend] = useState([]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -18,27 +19,66 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
       const empRes = await API.get("/employees");
       setEmployees(empRes.data);
       
-      // Fetch today's attendance stats
+      // Fetch recent attendance for activity feed and stats
       let markedToday = 0;
       let presentToday = 0;
       let absentToday = 0;
-      
-      try {
-        const statsRes = await API.get("/stats/attendance/today");
-        markedToday = statsRes.data.total_marked || 0;
-        presentToday = statsRes.data.present || 0;
-        absentToday = statsRes.data.absent || 0;
-      } catch (err) {
-        console.error("Failed to fetch attendance stats:", err);
-      }
-      
-      // Fetch recent attendance for activity feed
+
+      const getLatestByEmployee = (records) => {
+        const latestMap = new Map();
+        records.forEach((record) => {
+          const recordTime = new Date(record.timestamp || record.date).getTime();
+          const existing = latestMap.get(record.employee_id);
+          if (!existing || recordTime > existing.recordTime) {
+            latestMap.set(record.employee_id, { record, recordTime });
+          }
+        });
+        return Array.from(latestMap.values()).map(entry => entry.record);
+      };
+
       try {
         const activityRes = await API.get("/attendance/all");
-        const sortedActivity = activityRes.data
-          .sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date))
+
+        // Get today's date in YYYY-MM-DD format
+        const todayDate = new Date().toISOString().split('T')[0];
+
+        const todayRecords = activityRes.data.filter(a => a.date === todayDate);
+        const latestTodayRecords = getLatestByEmployee(todayRecords);
+
+        markedToday = latestTodayRecords.length;
+        presentToday = latestTodayRecords.filter(a => a.status?.toLowerCase() === 'present').length;
+        absentToday = latestTodayRecords.filter(a => a.status?.toLowerCase() === 'absent').length;
+
+        // Filter today's attendance and sort by timestamp (most recent first)
+        const todayActivity = [...latestTodayRecords]
+          .sort((a, b) => {
+            const timeA = new Date(a.timestamp || a.date).getTime();
+            const timeB = new Date(b.timestamp || b.date).getTime();
+            return timeB - timeA; // Most recent first
+          })
           .slice(0, 5);
-        setRecentActivity(sortedActivity);
+
+        setRecentActivity(todayActivity);
+
+        // Calculate last 7 days attendance trend
+        const last7Days = [];
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+
+          const dayAttendance = activityRes.data.filter(a => a.date === dateStr);
+          const latestDayRecords = getLatestByEmployee(dayAttendance);
+          const presentCount = latestDayRecords.filter(a => a.status?.toLowerCase() === 'present').length;
+
+          last7Days.push({
+            date: dateStr,
+            day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            presentCount
+          });
+        }
+        setWeeklyTrend(last7Days);
       } catch (err) {
         console.error("Failed to fetch recent activity:", err);
       }
@@ -215,7 +255,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
 
             {/* Recent Activity */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-bold text-gray-800">Recent Activity</h2>
                 <button className="text-gray-400 hover:text-gray-600">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -229,55 +269,180 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
                   <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
                 </div>
               ) : recentActivity.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No recent activity</p>
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No attendance marked yet today</p>
+                </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {recentActivity.map((activity, idx) => {
                     const employee = employees.find(e => e.employee_id === activity.employee_id);
                     const isPresentStatus = activity.status?.toLowerCase() === 'present';
                     const isAbsentStatus = activity.status?.toLowerCase() === 'absent';
                     
                     return (
-                      <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            isPresentStatus ? 'bg-green-100' :
-                            isAbsentStatus ? 'bg-red-100' :
-                            'bg-blue-100'
-                          }`}>
-                            {isPresentStatus ? (
-                              <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-                              </svg>
-                            ) : isAbsentStatus ? (
-                              <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                              </svg>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-800">
-                              <span className="font-semibold">{employee?.full_name || activity.employee_id}</span>
-                              {' '}marked{' '}
-                              <span className={`font-semibold ${
-                                isPresentStatus ? 'text-green-600' :
-                                isAbsentStatus ? 'text-red-600' :
-                                'text-gray-600'
-                              }`}>
-                                {activity.status}
-                              </span>
-                            </p>
-                          </div>
+                      <div key={idx} className="flex items-center space-x-3 py-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isPresentStatus ? 'bg-green-100' :
+                          isAbsentStatus ? 'bg-red-100' :
+                          'bg-blue-100'
+                        }`}>
+                          {isPresentStatus ? (
+                            <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                            </svg>
+                          ) : isAbsentStatus ? (
+                            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-base text-gray-800">
+                            <span className="font-semibold">{employee?.full_name || activity.employee_id}</span>
+                            {' '}marked{' '}
+                            <span className={`font-semibold ${
+                              isPresentStatus ? 'text-green-600' :
+                              isAbsentStatus ? 'text-red-600' :
+                              'text-gray-600'
+                            }`}>
+                              {activity.status}
+                            </span>
+                          </p>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               )}
+            </div>
+
+            {/* Charts Section - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Today's Attendance Overview Bar Chart */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Today's Attendance Overview</h2>
+              
+              <div className="space-y-5">
+                {/* Present Bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-gray-700">Present</span>
+                    <span className="text-base font-bold text-green-600">{stats.presentToday}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-xl h-10 overflow-hidden shadow-inner relative">
+                    <div 
+                      className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-xl flex items-center px-4 transition-all duration-700 ease-out shadow-sm"
+                      style={{ 
+                        width: `${stats.totalEmployees > 0 ? Math.max((stats.presentToday / stats.totalEmployees) * 100, stats.presentToday > 0 ? 8 : 0) : 0}%` 
+                      }}
+                    >
+                      {stats.presentToday > 0 && stats.totalEmployees > 0 && (
+                        <span className="text-sm font-bold text-white drop-shadow">
+                          {Math.round((stats.presentToday / stats.totalEmployees) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Absent Bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-gray-700">Absent</span>
+                    <span className="text-base font-bold text-red-600">{stats.absentToday}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-xl h-10 overflow-hidden shadow-inner relative">
+                    <div 
+                      className="bg-gradient-to-r from-red-500 to-red-600 h-full rounded-xl flex items-center px-4 transition-all duration-700 ease-out shadow-sm"
+                      style={{ 
+                        width: `${stats.totalEmployees > 0 ? Math.max((stats.absentToday / stats.totalEmployees) * 100, stats.absentToday > 0 ? 8 : 0) : 0}%` 
+                      }}
+                    >
+                      {stats.absentToday > 0 && stats.totalEmployees > 0 && (
+                        <span className="text-sm font-bold text-white drop-shadow">
+                          {Math.round((stats.absentToday / stats.totalEmployees) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Unmarked Bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-gray-700">Unmarked</span>
+                    <span className="text-base font-bold text-gray-600">{stats.totalEmployees - stats.markedToday}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-xl h-10 overflow-hidden shadow-inner relative">
+                    <div 
+                      className="bg-gradient-to-r from-gray-400 to-gray-500 h-full rounded-xl flex items-center px-4 transition-all duration-700 ease-out shadow-sm"
+                      style={{ 
+                        width: `${stats.totalEmployees > 0 ? Math.max(((stats.totalEmployees - stats.markedToday) / stats.totalEmployees) * 100, (stats.totalEmployees - stats.markedToday) > 0 ? 8 : 0) : 0}%` 
+                      }}
+                    >
+                      {(stats.totalEmployees - stats.markedToday) > 0 && stats.totalEmployees > 0 && (
+                        <span className="text-sm font-bold text-white drop-shadow">
+                          {Math.round(((stats.totalEmployees - stats.markedToday) / stats.totalEmployees) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Attendance Trend - Last 7 Days */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Attendance Trend (Last 7 Days)</h2>
+              
+              {weeklyTrend.length > 0 ? (
+                <div>
+                  <div className="relative">
+                    {/* Y-axis baseline */}
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-200"></div>
+                    
+                    <div className="flex items-end justify-between h-56 gap-3 pb-2">
+                      {weeklyTrend.map((day, idx) => {
+                        const maxCount = Math.max(...weeklyTrend.map(d => d.presentCount), 1);
+                        const heightPercent = (day.presentCount / maxCount) * 100;
+                        
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-3">
+                            {/* Bar */}
+                            <div className="w-full flex flex-col items-center justify-end h-48">
+                              {day.presentCount > 0 && (
+                                <span className="text-sm font-bold text-blue-600 mb-2">{day.presentCount}</span>
+                              )}
+                              <div 
+                                className="w-full max-w-[50px] bg-gradient-to-t from-blue-600 via-blue-500 to-blue-400 rounded-t-xl transition-all duration-700 ease-out hover:from-blue-700 hover:via-blue-600 hover:to-blue-500 cursor-pointer shadow-lg hover:shadow-xl"
+                                style={{ 
+                                  height: `${heightPercent}%`, 
+                                  minHeight: day.presentCount > 0 ? '30px' : '2px' 
+                                }}
+                                title={`${day.day}: ${day.presentCount} present`}
+                              />
+                            </div>
+                            {/* Label */}
+                            <span className="text-sm font-semibold text-gray-600">{day.day}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="text-center text-xs text-gray-500 mt-4 pt-2 border-t border-gray-100">
+                    Number of employees present each day
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center py-8">
+                  <p className="text-gray-500">No data available</p>
+                </div>
+              )}
+            </div>
             </div>
           </div>
 
