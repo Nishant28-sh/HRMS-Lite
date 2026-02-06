@@ -20,3 +20,12 @@ class AttendanceModel:
         """Create indexes for attendance collection"""
         from .database import attendance_collection
         attendance_collection.create_index([("employee_id", 1), ("date", -1)])
+
+class SalaryModel:
+    """Salary document structure in MongoDB"""
+    @staticmethod
+    def create_index():
+        """Create indexes for salary collection"""
+        from .database import salary_collection
+        salary_collection.create_index([("employee_id", 1), ("month", -1)])
+        salary_collection.create_index("month")
