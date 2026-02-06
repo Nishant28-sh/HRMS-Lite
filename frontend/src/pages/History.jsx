@@ -124,6 +124,11 @@ export default function History({ filter, clearFilter }) {
     setEndDate("");
   };
 
+  const handleEmployeeClick = (employeeId) => {
+    clearFilter(); // Clear today view filter
+    setSelectedEmployee(employeeId); // Select the employee
+  };
+
   // Filter records based on filter type
   const getFilteredRecords = () => {
     if (!filter || !filter.type || !filter.type.startsWith('today-')) {
@@ -267,8 +272,12 @@ export default function History({ filter, clearFilter }) {
                             <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
                               {record.employee.full_name?.charAt(0) || 'N/A'}
                             </div>
-                            <div className="ml-4">
-                              <p className="text-sm font-semibold text-gray-900">{record.employee.full_name}</p>
+                            <div 
+                              className="ml-4 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => handleEmployeeClick(record.employee.employee_id)}
+                              title="Click to view attendance history"
+                            >
+                              <p className="text-sm font-semibold text-blue-600 hover:text-blue-800">{record.employee.full_name}</p>
                               <p className="text-xs text-gray-500">{record.employee.email}</p>
                             </div>
                           </div>
