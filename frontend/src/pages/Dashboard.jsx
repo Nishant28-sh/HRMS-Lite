@@ -219,9 +219,13 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {employees.slice(0, 6).map((emp, idx) => (
-                <div 
-                  key={emp.employee_id} 
-                  className="group border border-gray-200/50 rounded-xl p-5 hover:shadow-xl hover:border-blue-200 transition-all duration-300 bg-gradient-to-br from-white to-gray-50/50 hover:from-blue-50/50 hover:to-indigo-50/50"
+                <button 
+                  key={emp.employee_id}
+                  onClick={() => {
+                    setHistoryFilter({ type: 'employee', employeeId: emp.employee_id });
+                    setCurrentPage('history');
+                  }}
+                  className="group border border-gray-200/50 rounded-xl p-5 hover:shadow-xl hover:border-blue-200 transition-all duration-300 bg-gradient-to-br from-white to-gray-50/50 hover:from-blue-50/50 hover:to-indigo-50/50 cursor-pointer w-full text-left"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <div className="flex items-center space-x-4">
@@ -242,7 +246,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
                       <p className="text-xs text-gray-400 mt-0.5">{emp.department}</p>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

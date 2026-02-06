@@ -135,30 +135,31 @@ export default function Employees({ setCurrentPage, setHistoryFilter }) {
                 </thead>
                 <tbody className="divide-y divide-gray-200/50">
                   {employees.map((emp, idx) => (
-                    <tr key={emp.employee_id} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200">
+                    <tr 
+                      key={emp.employee_id} 
+                      onClick={() => {
+                        setHistoryFilter({ employeeId: emp.employee_id, employeeName: emp.full_name });
+                        setCurrentPage('history');
+                      }}
+                      className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 cursor-pointer"
+                    >
                       <td className="px-8 py-5 whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            setHistoryFilter({ employeeId: emp.employee_id, employeeName: emp.full_name });
-                            setCurrentPage('history');
-                          }}
-                          className="flex items-center space-x-4 w-full hover:opacity-80 transition-opacity cursor-pointer group/emp"
-                        >
+                        <div className="flex items-center space-x-4">
                           <div className={`relative w-12 h-12 bg-gradient-to-br ${
                             idx % 5 === 0 ? 'from-blue-500 to-indigo-600' :
                             idx % 5 === 1 ? 'from-purple-500 to-pink-600' :
                             idx % 5 === 2 ? 'from-green-500 to-teal-600' :
                             idx % 5 === 3 ? 'from-orange-500 to-red-600' :
                             'from-cyan-500 to-blue-600'
-                          } rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform group-hover/emp:scale-125`}>
+                          } rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform`}>
                             {emp.full_name?.charAt(0).toUpperCase() || 'N'}
                             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                           </div>
                           <div className="text-left">
-                            <p className="text-sm font-bold text-gray-900 group-hover/emp:text-blue-600 transition-colors">{emp.full_name || 'Unknown'}</p>
+                            <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.full_name || 'Unknown'}</p>
                             <p className="text-xs text-gray-500 mt-0.5">Click to view profile</p>
                           </div>
-                        </button>
+                        </div>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="inline-flex items-center bg-blue-50 px-3 py-1.5 rounded-lg">
@@ -181,7 +182,10 @@ export default function Employees({ setCurrentPage, setHistoryFilter }) {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
                         <button
-                          onClick={() => handleDelete(emp.employee_id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(emp.employee_id);
+                          }}
                           className="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 hover:shadow-md transition-all font-semibold text-sm group-hover:scale-105"
                         >
                           <svg className="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">

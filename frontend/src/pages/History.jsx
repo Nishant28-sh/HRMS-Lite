@@ -348,7 +348,11 @@ export default function History({ filter, clearFilter }) {
                     </thead>
                     <tbody className="divide-y divide-gray-200/50">
                       {filteredRecords.map((record, idx) => (
-                        <tr key={idx} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200">
+                        <tr 
+                          key={idx} 
+                          onClick={() => handleEmployeeClick(record.employee.employee_id)}
+                          className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 cursor-pointer"
+                        >
                           <td className="px-8 py-5 whitespace-nowrap">
                             <div className="flex items-center space-x-4">
                               <div className={`relative w-12 h-12 bg-gradient-to-br ${
@@ -361,12 +365,8 @@ export default function History({ filter, clearFilter }) {
                                 {record.employee.full_name?.charAt(0) || 'N'}
                                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                               </div>
-                              <div
-                                className="cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleEmployeeClick(record.employee.employee_id)}
-                                title="Click to view attendance history"
-                              >
-                                <p className="text-sm font-bold text-gray-900 hover:text-blue-600 transition-colors">{record.employee.full_name}</p>
+                              <div>
+                                <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{record.employee.full_name}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">{record.employee.email}</p>
                               </div>
                             </div>
