@@ -7,6 +7,14 @@ export default function History({ filter, clearFilter }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [todayRecords, setTodayRecords] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [employeeStats, setEmployeeStats] = useState({
+    totalDays: 0,
+    presentDays: 0,
+    absentDays: 0,
+    attendanceRate: 0
+  });
 
   const fetchEmployees = async () => {
     try {
@@ -22,9 +30,28 @@ export default function History({ filter, clearFilter }) {
     try {
       const res = await API.get(`/attendance/${empId}`);
       setRecords(res.data);
+      
+      // Calculate statistics
+      const totalDays = res.data.length;
+      const presentDays = res.data.filter(r => r.status === 'Present').length;
+      const absentDays = res.data.filter(r => r.status === 'Absent').length;
+      const attendanceRate = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
+      
+      setEmployeeStats({
+        totalDays,
+        presentDays,
+        absentDays,
+        attendanceRate
+      });
     } catch (err) {
       console.error("Failed to fetch attendance:", err);
       setRecords([]);
+      setEmployeeStats({
+        totalDays: 0,
+        presentDays: 0,
+        absentDays: 0,
+        attendanceRate: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -80,6 +107,23 @@ export default function History({ filter, clearFilter }) {
     }
   }, [selectedEmployee]);
 
+  // Filter records by date range
+  const getFilteredAttendance = () => {
+    if (!startDate && !endDate) return records;
+    
+    return records.filter(record => {
+      const recordDate = new Date(record.date);
+      const start = startDate ? new Date(startDate) : new Date('1900-01-01');
+      const end = endDate ? new Date(endDate) : new Date('2100-12-31');
+      return recordDate >= start && recordDate <= end;
+    });
+  };
+
+  const clearDateFilter = () => {
+    setStartDate("");
+    setEndDate("");
+  };
+
   // Filter records based on filter type
   const getFilteredRecords = () => {
     if (!filter || !filter.type || !filter.type.startsWith('today-')) {
@@ -97,6 +141,7 @@ export default function History({ filter, clearFilter }) {
   };
 
   const filteredRecords = getFilteredRecords();
+  const filteredAttendance = getFilteredAttendance();
   const showTodayView = filter && filter.type && filter.type.startsWith('today-');
 
   const getFilterTitle = () => {
@@ -150,6 +195,42 @@ export default function History({ filter, clearFilter }) {
 
       {/* Content */}
       <div className="p-8">
+        {/* Date Range Filter - Only show for individual employee view */}
+        {!showTodayView && selectedEmployee && (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <div className="flex items-end">
+                  <button
+                    onClick={clearDateFilter}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         {showTodayView ? (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             {loading ? (
@@ -241,17 +322,79 @@ export default function History({ filter, clearFilter }) {
             <p className="text-gray-500 mt-2">Choose an employee to view their attendance history.</p>
           </div>
         ) : (
+          <>
+            {/* Employee Statistics Cards */}
+            {selectedEmployee && employeeStats.totalDays > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100 text-sm font-medium">Total Days</p>
+                      <p className="text-3xl font-bold mt-2">{employeeStats.totalDays}</p>
+                    </div>
+                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-md p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-100 text-sm font-medium">Present Days</p>
+                      <p className="text-3xl font-bold mt-2">{employeeStats.presentDays}</p>
+                    </div>
+                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl shadow-md p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-red-100 text-sm font-medium">Absent Days</p>
+                      <p className="text-3xl font-bold mt-2">{employeeStats.absentDays}</p>
+                    </div>
+                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-purple-100 text-sm font-medium">Attendance Rate</p>
+                      <p className="text-3xl font-bold mt-2">{employeeStats.attendanceRate}%</p>
+                    </div>
+                    <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
               </div>
-            ) : records.length === 0 ? (
+            ) : filteredAttendance.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="mx-auto h-20 w-20 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
                 </svg>
-                <p className="text-gray-500 mt-4">No attendance records found for this employee.</p>
+                <p className="text-gray-500 mt-4">No attendance records found{(startDate || endDate) ? ' for the selected date range' : ' for this employee'}.</p>
               </div>
             ) : (
               <>
@@ -264,7 +407,7 @@ export default function History({ filter, clearFilter }) {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {records.map((record, idx) => {
+                    {filteredAttendance.map((record, idx) => {
                       const dateObj = new Date(record.date);
                       const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
                       
@@ -300,12 +443,21 @@ export default function History({ filter, clearFilter }) {
                 </table>
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
                   <p className="text-sm text-gray-600">
-                    Total records: <span className="font-semibold">{records.length}</span>
+                    {(startDate || endDate) ? (
+                      <>
+                        Showing <span className="font-semibold">{filteredAttendance.length}</span> of <span className="font-semibold">{records.length}</span> records
+                      </>
+                    ) : (
+                      <>
+                        Total records: <span className="font-semibold">{records.length}</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </>
             )}
           </div>
+          </>
         )}
       </div>
     </div>
