@@ -43,11 +43,11 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
 
   return (
     <div className={`bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col shadow-2xl h-screen transition-all duration-300 ${isMinimized ? "w-20" : "w-64"}`}>
-      {/* Logo/Header */}
+      {/* Logo/Header with Collapse Button */}
       <div className={`p-6 border-b border-white/10 ${isMinimized ? "p-3" : ""}`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className={`flex items-center ${isMinimized ? "justify-center w-full" : "space-x-3"}`}>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-lg">
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-lg flex-shrink-0">
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
               </svg>
@@ -59,21 +59,36 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
               </div>
             )}
           </div>
+          
+          {/* Collapse/Expand Button - Top Right */}
+          {!isMinimized && (
+            <button
+              onClick={() => setIsMinimized(true)}
+              className="p-1.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
+              title="Minimize"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Collapse Button */}
-      <div className={`px-4 py-2 ${isMinimized ? "px-2" : ""}`}>
-        <button
-          onClick={() => setIsMinimized(!isMinimized)}
-          className="w-full flex items-center justify-center p-2.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
-          title={isMinimized ? "Expand" : "Minimize"}
-        >
-          <svg className={`w-5 h-5 transition-transform duration-300 ${isMinimized ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-      </div>
+      {/* Expand button when minimized - at top */}
+      {isMinimized && (
+        <div className="p-2">
+          <button
+            onClick={() => setIsMinimized(false)}
+            className="w-full p-1.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-all flex justify-center"
+            title="Expand"
+          >
+            <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
@@ -82,7 +97,13 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           return (
             <button
               key={item.id}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => {
+                setCurrentPage(item.id);
+                // Auto-expand when clicking menu items while minimized
+                if (isMinimized) {
+                  setIsMinimized(false);
+                }
+              }}
               className={`w-full flex items-center ${isMinimized ? "justify-center" : "space-x-3"} px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
                 currentPage === item.id
                   ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/50"
