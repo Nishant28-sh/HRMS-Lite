@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from ..database import attendance_collection, employee_collection
 from ..schemas import AttendanceCreate
-from datetime import date
+from datetime import date, datetime
 from bson import ObjectId
 from pydantic import BaseModel
 
@@ -39,10 +39,32 @@ def mark_attendance(attendance: AttendanceCreate):
     attendance_dict = {
         "employee_id": attendance.employee_id,
         "date": date_str,
-        "status": attendance.status
+        "status": attendance.status,
+        "timestamp": datetime.now().isoformat()
     }
     attendance_collection.insert_one(attendance_dict)
     return {"message": "Attendance marked successfully"}
+
+@router.get("/all")
+def get_all_attendance():
+    """Get all attendance records"""
+    records = list(attendance_collection.find().sort("date", -1).limit(100))
+    # Convert ObjectId to string for JSON serialization
+    for record in records:
+        record["id"] = str(record["_id"])
+        del record["_id"]
+    return records
+
+@router.get("/{employee_id}")
+def get_attendance(employee_id: str):
+    records = list(attendance_collection.find(
+        {"employee_id": employee_id}
+    ))
+    # Convert ObjectId to string for JSON serialization
+    for record in records:
+        record["id"] = str(record["_id"])
+        del record["_id"]
+    return records
 
 @router.put("/{record_id}")
 def update_attendance(record_id: str, update: AttendanceUpdate):
@@ -90,6 +112,16 @@ def get_today_attendance_stats():
         "absent": absent_count,
         "total_marked": total_marked
     }
+
+@router.get("/")
+def get_all_attendance():
+    """Get all attendance records"""
+    records = list(attendance_collection.find().sort("date", -1).limit(100))
+    # Convert ObjectId to string for JSON serialization
+    for record in records:
+        record["id"] = str(record["_id"])
+        del record["_id"]
+    return records
 
 @router.get("/{employee_id}")
 def get_attendance(employee_id: str):

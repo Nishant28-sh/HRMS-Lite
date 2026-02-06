@@ -36,20 +36,20 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
   ];
 
   return (
-    <div className={`bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col shadow-2xl h-screen transition-all duration-300 ${isMinimized ? "w-20" : "w-64"}`}>
+    <div className={`bg-white text-gray-800 flex flex-col shadow-xl border-r border-gray-200 h-screen transition-all duration-300 ${isMinimized ? "w-20" : "w-64"}`}>
       {/* Logo/Header with Collapse Button */}
-      <div className={`p-6 border-b border-white/10 ${isMinimized ? "p-3" : ""}`}>
+      <div className={`p-6 border-b border-gray-200 ${isMinimized ? "p-3" : ""}`}>
         <div className="flex items-center justify-between gap-2">
           <div className={`flex items-center ${isMinimized ? "justify-center w-full" : "space-x-3"}`}>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-lg flex-shrink-0">
-              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-xl shadow-md flex-shrink-0">
+              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
               </svg>
             </div>
             {!isMinimized && (
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">HRMS Lite</h1>
-                <p className="text-xs text-blue-300/80 font-medium">Human Resources</p>
+                <h1 className="text-xl font-bold text-gray-900">HRMS Lite</h1>
+                <p className="text-xs text-gray-500 font-medium">Human Resources</p>
               </div>
             )}
           </div>
@@ -58,7 +58,7 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
           {!isMinimized && (
             <button
               onClick={() => setIsMinimized(true)}
-              className="p-1.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-all flex-shrink-0"
+              className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
               title="Minimize"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
         <div className="p-2">
           <button
             onClick={() => setIsMinimized(false)}
-            className="w-full p-1.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition-all flex justify-center"
+            className="w-full p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all flex justify-center"
             title="Expand"
           >
             <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,20 +100,20 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
               }}
               className={`w-full flex items-center ${isMinimized ? "justify-center" : "space-x-3"} px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
                 currentPage === item.id
-                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/50"
-                  : "text-blue-100/80 hover:bg-white/10 hover:text-white"
+                  ? "bg-blue-50 text-blue-600 shadow-sm border border-blue-100"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               }`}
               title={isMinimized ? item.name : ""}
             >
               {currentPage === item.id && (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 animate-pulse" />
+                <div className="absolute inset-0 bg-blue-50/50" />
               )}
               <Icon />
               {!isMinimized && (
                 <>
                   <span className="font-semibold relative z-10">{item.name}</span>
                   {currentPage === item.id && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-l-full" />
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-l-full" />
                   )}
                 </>
               )}
@@ -123,18 +123,18 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
       </nav>
 
       {/* User Profile */}
-      <div className={`border-t border-white/10 ${isMinimized ? "p-2" : "p-4"}`}>
-        <div className={`flex items-center ${isMinimized ? "justify-center" : "space-x-3"} px-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl hover:bg-white/10 transition-all cursor-pointer group`}>
-          <div className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform">
+      <div className={`border-t border-gray-200 ${isMinimized ? "p-2" : "p-4"}`}>
+        <div className={`flex items-center ${isMinimized ? "justify-center" : "space-x-3"} px-4 py-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all cursor-pointer group`}>
+          <div className="w-11 h-11 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center font-bold text-white shadow-md group-hover:scale-110 transition-transform">
             A
           </div>
           {!isMinimized && (
             <>
               <div className="flex-1">
-                <p className="font-semibold text-white">Admin User</p>
-                <p className="text-xs text-blue-300/70">Administrator</p>
+                <p className="font-semibold text-gray-900">Admin User</p>
+                <p className="text-xs text-gray-500">Administrator</p>
               </div>
-              <svg className="w-5 h-5 text-blue-300/50 group-hover:text-blue-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </>

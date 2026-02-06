@@ -34,9 +34,9 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
       
       // Fetch recent attendance for activity feed
       try {
-        const activityRes = await API.get("/attendance");
+        const activityRes = await API.get("/attendance/all");
         const sortedActivity = activityRes.data
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+          .sort((a, b) => new Date(b.timestamp || b.date) - new Date(a.timestamp || a.date))
           .slice(0, 5);
         setRecentActivity(sortedActivity);
       } catch (err) {
@@ -273,36 +273,9 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500">{formatTime(activity.timestamp)}</span>
-                          <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                        </div>
                       </div>
                     );
                   })}
-                  
-                  {/* Show unmmarked employees notice */}
-                  {stats.totalEmployees > stats.markedToday && (
-                    <div className="flex items-center justify-between py-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100">
-                          <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-800">
-                            Attendance not marked for{' '}
-                            <span className="font-semibold">{stats.totalEmployees - stats.markedToday} employees</span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">08:00 AM</span>
-                        <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
