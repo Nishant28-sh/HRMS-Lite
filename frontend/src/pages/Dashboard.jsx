@@ -10,6 +10,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
     markedToday: 0,
     presentToday: 0,
     absentToday: 0,
+    leaveToday: 0,
   });
   const [weeklyTrend, setWeeklyTrend] = useState([]);
 
@@ -23,6 +24,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
       let markedToday = 0;
       let presentToday = 0;
       let absentToday = 0;
+      let leaveToday = 0;
 
       const getLatestByEmployee = (records) => {
         const latestMap = new Map();
@@ -48,6 +50,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
         markedToday = latestTodayRecords.length;
         presentToday = latestTodayRecords.filter(a => a.status?.toLowerCase() === 'present').length;
         absentToday = latestTodayRecords.filter(a => a.status?.toLowerCase() === 'absent').length;
+        leaveToday = latestTodayRecords.filter(a => a.status?.toLowerCase() === 'leave').length;
 
         // Filter today's attendance and sort by timestamp (most recent first)
         const todayActivity = [...latestTodayRecords]
@@ -88,6 +91,7 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
         markedToday,
         presentToday,
         absentToday,
+        leaveToday,
       });
     } catch (err) {
       console.error("Failed to fetch data:", err);
@@ -365,6 +369,28 @@ export default function Dashboard({ setCurrentPage, setHistoryFilter }) {
                       {stats.absentToday > 0 && stats.totalEmployees > 0 && (
                         <span className="text-sm font-bold text-white drop-shadow">
                           {Math.round((stats.absentToday / stats.totalEmployees) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Leave Bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-gray-700">Leave</span>
+                    <span className="text-base font-bold text-amber-600">{stats.leaveToday}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-xl h-10 overflow-hidden shadow-inner relative">
+                    <div 
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-xl flex items-center px-4 transition-all duration-700 ease-out shadow-sm"
+                      style={{ 
+                        width: `${stats.totalEmployees > 0 ? Math.max((stats.leaveToday / stats.totalEmployees) * 100, stats.leaveToday > 0 ? 8 : 0) : 0}%` 
+                      }}
+                    >
+                      {stats.leaveToday > 0 && stats.totalEmployees > 0 && (
+                        <span className="text-sm font-bold text-white drop-shadow">
+                          {Math.round((stats.leaveToday / stats.totalEmployees) * 100)}%
                         </span>
                       )}
                     </div>

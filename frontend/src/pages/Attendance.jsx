@@ -11,6 +11,7 @@ export default function Attendance() {
   const [mode, setMode] = useState("mark"); // 'mark' or 'update'
   const [attendanceRecord, setAttendanceRecord] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [markedByEmployee, setMarkedByEmployee] = useState({});
 
   const fetchEmployees = async () => {
     try {
@@ -24,6 +25,44 @@ export default function Attendance() {
   useEffect(() => {
     fetchEmployees();
   }, []);
+
+  const fetchMarkedForDate = async (selectedDate) => {
+    try {
+      const res = await API.get("/attendance/");
+      const records = Array.isArray(res.data) ? res.data : [];
+      const map = {};
+
+      records.forEach((record) => {
+        if (record.date === selectedDate) {
+          map[record.employee_id] = record.status;
+        }
+      });
+
+      setMarkedByEmployee(map);
+    } catch (err) {
+      console.error("Failed to fetch attendance list:", err);
+      setMarkedByEmployee({});
+    }
+  };
+
+  useEffect(() => {
+    if (date) {
+      fetchMarkedForDate(date);
+    }
+  }, [date]);
+
+  const getEmployeeOptionLabel = (emp) => {
+    const markedStatus = markedByEmployee[emp.employee_id];
+    const statusIcon = markedStatus === "Present"
+      ? "🟢"
+      : markedStatus === "Absent"
+        ? "🔴"
+        : markedStatus === "Leave"
+          ? "🟡"
+          : "";
+    const suffix = markedStatus ? ` [${statusIcon} MARKED: ${markedStatus}]` : "";
+    return `${emp.employee_id} - ${emp.full_name} (${emp.department})${suffix}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,6 +81,10 @@ export default function Attendance() {
         status,
       });
       setMessage({ type: "success", text: "Attendance marked successfully!" });
+      setMarkedByEmployee((prev) => ({
+        ...prev,
+        [selectedEmployee]: status,
+      }));
       setSelectedEmployee("");
       setStatus("Present");
     } catch (err) {
@@ -99,6 +142,10 @@ export default function Attendance() {
         status,
       });
       setMessage({ type: "success", text: "Attendance updated successfully!" });
+      setMarkedByEmployee((prev) => ({
+        ...prev,
+        [selectedEmployee]: status,
+      }));
       setAttendanceRecord(null);
       setSelectedEmployee("");
       setStatus("Present");
@@ -211,10 +258,15 @@ export default function Attendance() {
                     <option value="">Choose an employee...</option>
                     {employees.map((emp) => (
                       <option key={emp.employee_id} value={emp.employee_id}>
-                        {emp.employee_id} - {emp.full_name} ({emp.department})
+                        {getEmployeeOptionLabel(emp)}
                       </option>
                     ))}
                   </select>
+                  {selectedEmployee && markedByEmployee[selectedEmployee] && (
+                    <div className="mt-3 inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-blue-700">
+                      Already marked: {markedByEmployee[selectedEmployee]}
+                    </div>
+                  )}
                 </div>
 
                 {/* Date & Status Row */}
@@ -251,6 +303,7 @@ export default function Attendance() {
                     >
                       <option value="Present">Present</option>
                       <option value="Absent">Absent</option>
+                      <option value="Leave">Leave</option>
                     </select>
                   </div>
                 </div>
@@ -323,10 +376,15 @@ export default function Attendance() {
                       <option value="">Choose an employee...</option>
                       {employees.map((emp) => (
                         <option key={emp.employee_id} value={emp.employee_id}>
-                          {emp.employee_id} - {emp.full_name} ({emp.department})
+                          {getEmployeeOptionLabel(emp)}
                         </option>
                       ))}
                     </select>
+                    {selectedEmployee && markedByEmployee[selectedEmployee] && (
+                      <div className="mt-3 inline-flex items-center rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-orange-700">
+                        Already marked: {markedByEmployee[selectedEmployee]}
+                      </div>
+                    )}
                   </div>
 
                   {/* Date Selection & Search */}
@@ -424,6 +482,7 @@ export default function Attendance() {
                           >
                             <option value="Present">Present</option>
                             <option value="Absent">Absent</option>
+                            <option value="Leave">Leave</option>
                           </select>
                         </div>
                       </div>
